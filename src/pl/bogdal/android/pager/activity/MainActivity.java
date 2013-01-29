@@ -1,15 +1,20 @@
 package pl.bogdal.android.pager.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import pl.bogdal.android.pager.R;
 import pl.bogdal.android.pager.config.Settings;
 
 public class MainActivity extends Activity {
 
-    static final String LOG_TAG = "GCMMainActivity";
+    protected String regId;
+    private Context context = null;
 
     /**
      * Called when the activity is first created.
@@ -19,16 +24,41 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        context =  getApplicationContext();
+
         GCMRegistrar.checkDevice(this);
         GCMRegistrar.checkManifest(this);
 
-        final String regId = GCMRegistrar.getRegistrationId(this);
+        regId = GCMRegistrar.getRegistrationId(context);
+
+        Button serviceButton = (Button) findViewById(R.id.bService);
+        serviceButton.setOnClickListener(buttonListener);
 
         if (regId.equals("")) {
-            GCMRegistrar.register(this, Settings.GCM_SENDER);
+            serviceButton.setText("Register device");
         } else {
-            Log.v(LOG_TAG, "Already registered");
-            GCMRegistrar.unregister(this);
+            serviceButton.setText("Unregister device");
         }
+    }
+
+    private final OnClickListener buttonListener = new OnClickListener() {
+        public void onClick(View v) {
+        if (regId.equals("")) {
+            GCMRegistrar.register(context, Settings.GCM_SENDER);
+            showMessage("Device was registered successfully");
+        } else {
+            GCMRegistrar.unregister(context);
+            showMessage("Device was unregistered successfully ");
+        }
+
+        finish();
+        }
+    };
+
+    private void showMessage(String message) {
+        Toast myToast;
+
+        myToast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+        myToast.show();
     }
 }
